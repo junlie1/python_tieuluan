@@ -1,5 +1,5 @@
 import random
-""""Lam them cai dem diem"""
+
 class Node:
     def __init__(self, row, col):
         self.row = row
@@ -11,10 +11,10 @@ class Node:
 
 class SnakeLogic(object):
     def __init__(self):
-        self.canMove = True
         self.gameOver = False
         self.score = 0
         self.gameStarted = False
+        self.canMove = True
 
         self.boardSize = 10 
         self.snakeBoard = []  
@@ -27,6 +27,7 @@ class SnakeLogic(object):
         self.obstaclePosition = {}
 
         self.loadSnakeBoard(self.boardSize)
+        
 
     def isGameRunning(self):
         return self.gameStarted and not self.gameOver
@@ -50,7 +51,6 @@ class SnakeLogic(object):
            1) Rắn đâm đầu vào tường
            2) Rắn tự đâm vào cơ thể của nó
            3) Rắn đâm vào chướng ngại vật
-           4) Chiều dài của rắn đạt 15
         """
         if headRow < 0 or headRow >= self.boardSize:
             self.gameOver = True
@@ -64,15 +64,11 @@ class SnakeLogic(object):
         if self.isCollidingWithObstacles(headRow, headCol):
             self.gameOver = True
             return True
-        if self.snakeLength() > 50:
-            self.gameOver = True
-            return True
-        
         return False
 
     def isCollidingWithSelf(self, headRow, headCol):
         """Kiểm tra đầu rắn với thân rắn có va chạm không"""
-        self.setPositions()  # Gọi hàm này ra để lấy vị trí đầu và thân con rắn trong danh sách snakeSegments
+        self.setPositions() 
         for segment in self.snakeSegments:
             if segment['row'] == headRow and segment['col'] == headCol:
                 return True
@@ -85,6 +81,8 @@ class SnakeLogic(object):
         return False
 
     def makeMove(self, direction):
+        if not self.canMove:
+            return
         self.direction = direction
         if self.direction == "Left":
             self.moveSnake(0, -1)
@@ -96,20 +94,20 @@ class SnakeLogic(object):
             self.moveSnake(1, 0)
 
     def loadSnakeBoard(self, size):
-        """initializes the snakeBoard 2d List, and starts the snake in the middle of the board
-           and places a food object a random place
-           snakeBoard is a 2D List
+        """Khởi tạo danh sách 2D của snakeboard, đặt mặc định đầu rắn sẽ ở giữa màn hình
+           thức ăn đặt rando
            0 = empty space
            -1 = food
            -3 = obstacle
            >1 = snake"""
-        self.snakeBoard = [[0 for x in range(size)] for x in range(size)]
+        self.boardSize = size
+        self.snakeBoard = [[0 for x in range(size)] for x in range(size)] #khởi tạo kích thước bảng là size x size
         self.snakeBoard[int(size / 2)][int(size / 2)] = 1
         self.makeFood()
         self.makeObstacles()
 
     def setPositions(self):
-        """sets the snakeHead, and snakeSegments data values (row, col info)"""
+        """đảm bảo rằng các logic di chuyển, kiểm tra va chạm, và tìm đường trong trò chơi hoạt động đúng cách"""
         maxVal = self.snakeLength()
         self.snakeSegments = []
         for row in range(self.boardSize):
@@ -122,8 +120,7 @@ class SnakeLogic(object):
                     self.snakeSegments.append(snakePart)
 
     def removeTail(self):
-        """removes the tail of the snake by decreasing all the number values of the snake by one
-        (tail has value 1, so it will become 0)"""
+        """rắn di chuyển mà không để lại dấu vết trên bảng"""
         for row in range(self.boardSize):
             for col in range(self.boardSize):
                 if self.snakeBoard[row][col] > 0:
@@ -133,15 +130,15 @@ class SnakeLogic(object):
         return self.score
 
     def moveSnake(self, rowDiff, colDiff):
-        """Input:
-           rowDiff: the amount to move in the row (vertical) direction by
-           colDiff: the amount to move in the col (horizontal) direction by
-           Moves the snake by the given amount"""
+        """ Kiểm tra vị trị mới đầu rắn có gây kết thức game không
+            Kiểm tra xem đã ăn thức ăn chưa
+        """
         if not self.gameOver:
             self.setPositions()
             newHeadRow = self.snakeHead['row'] + rowDiff
             newHeadCol = self.snakeHead['col'] + colDiff
             if self.isGameOver(newHeadRow, newHeadCol):
+                self.gameOver = True
                 return
             headRank = self.snakeLength()
             if self.snakeBoard[newHeadRow][newHeadCol] == -1:
@@ -153,11 +150,11 @@ class SnakeLogic(object):
                 self.snakeBoard[newHeadRow][newHeadCol] = headRank
 
     def makeFood(self):
-        """Creates a food object in the GUI at a position that is empty currently"""
+        """Tạo thức ăn cho 1 vị trí trống"""
         width = self.boardSize
         row = random.choice(range(width))
         col = random.choice(range(width))
-        # if we are at a location where snake already exists, keep looking for random blank space
+        # kiểm tra xem có phải ô trống không
         while self.snakeBoard[row][col] != 0:
             row = random.choice(range(width))
             col = random.choice(range(width))
@@ -168,17 +165,18 @@ class SnakeLogic(object):
         self.calculateManhattanBoard()
 
     def makeObstacles(self):
-        """Creates three obstacle objects in the GUI at positions that are empty currently"""
-        for _ in range(3):  # Create three obstacles
+        """Tạo chướng ngại vật"""
+        for _ in range(3): 
             width = self.boardSize
             row = random.choice(range(width))
             col = random.choice(range(width))
-            # if we are at a location where snake already exists, keep looking for random blank space
+            # Kiểm tra xem có phải là ô trống không
             while self.snakeBoard[row][col] != 0:
                 row = random.choice(range(width))
                 col = random.choice(range(width))
 
             self.snakeBoard[row][col] = -3
+            
 
     # A star Algorithm
     def calculateManhattanBoard(self):
@@ -192,7 +190,7 @@ class SnakeLogic(object):
 
     def heuristic(self, node):
         """calculates manhattan distance from the node to the food"""
-        inf = float('inf')
+        inf = float('inf') #để đánh dấu các nút k hợp lệ
         for snakePart in self.snakeSegments:
             snakeRow = snakePart['row']
             snakeCol = snakePart['col']
@@ -235,19 +233,21 @@ class SnakeLogic(object):
         return surroundNodes
 
     def isValidNode(self, node):
-        """Checks if the node is a valid move (not colliding with snake body or obstacle)"""
+        """Kiểm tra cái node hiện tại có thỏa không (không va chạm với thân và chướng ngại vật)"""
         if self.snakeBoard[node.row][node.col] > 0 or self.snakeBoard[node.row][node.col] == -3:
             return False
         return True
 
     def findMinNode(self, nodes):
-        """Finds the node with the lowest fVal"""
+        """tìm node với fVal là nhỏ nhất"""
         minNode = nodes[0]
         for node in nodes:
             if node.fVal < minNode.fVal:
                 minNode = node
         return minNode
+    
 
+    #Hàm lưu trữ đường đi từ đích đến điểm bắt đầu đang xét
     def printPathList(self, end):
         while end.parent is not None:
             self.pathList.append([end.row, end.col])
@@ -255,7 +255,7 @@ class SnakeLogic(object):
         self.pathList.reverse()
 
     def calculateAstar(self):
-        self.pathList = []
+        self.pathList = [] #lưu trữ đường đi tìm đc
         self.setPositions()
         self.setNodeBoard()
         openList = []
@@ -292,7 +292,16 @@ class SnakeLogic(object):
 
     def setDirection(self):
         if not self.pathList:
-            return
+            if self.direction == "Left":
+                self.moveSnake(0, -1)
+            elif self.direction == "Right":
+                self.moveSnake(0, 1)
+            elif self.direction == "Up":
+                self.moveSnake(-1, 0)
+            elif self.direction == "Down":
+                self.moveSnake(1, 0)
+            self.gameOver = True 
+            return 
         nextLocation = self.pathList.pop(0)
         nextRow, nextCol = nextLocation
         if self.snakeBoard[nextRow][nextCol] > 0:
@@ -309,7 +318,7 @@ class SnakeLogic(object):
 
     def stall(self):
         """Kiểm tra tất cả các hướng di chuyển có thể và chọn hướng an toàn nhất.
-           Nếu không có hướng đi an toàn thì để game over"""
+           Nếu không có hướng đi an toàn thì chọn 1 hướng ngẫu nhiên"""
         safeMoves = []
 
         if self.snakeHead['col'] - 1 >= 0 and self.snakeBoard[self.snakeHead['row']][self.snakeHead['col'] - 1] <= 0:  # left
@@ -323,13 +332,11 @@ class SnakeLogic(object):
 
         if safeMoves:
             # Chọn ngẫu nhiên một hướng đi an toàn
-            move = random.choice(safeMoves)
+            possibleMoves = [(0, -1), (0, 1), (-1, 0), (1, 0)]
+            move = random.choice(possibleMoves)
             self.moveSnake(move[0], move[1])
         else:
-            # Không có hướng đi an toàn, kết thúc trò chơi
-            print("stall has failed")
-            self.gameOver = True
-            return True
+           self.gameOver = True
 
 # Sử dụng lớp SnakeLogic
 game = SnakeLogic()
@@ -340,4 +347,3 @@ while not game.gameOver:
         game.setDirection()
     else:
         game.stall()
-print(f"Game Over! Your score is: {game.getScore()}")

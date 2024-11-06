@@ -243,6 +243,14 @@ class SnakeGUI(object):
         if board[row][col] > 0:
             # draw part of the snake body
             self.canvas.create_oval(left, top, right, bottom, fill="green")
+            if board[row][col] == self.logic.snakeLength():
+                self.canvas.create_text(left + cellSize * 0.5, top + cellSize * 0.5, text="đuôi", font=("Helvetica", 10), fill="black")
+                # # Mắt trái
+                # self.canvas.create_oval(left + cellSize * 0.25, top + cellSize * 0.25,
+                #                         left + cellSize * 0.4, top + cellSize * 0.4, fill="black")
+                # # Mắt phải
+                # self.canvas.create_oval(left + cellSize * 0.6, top + cellSize * 0.25,
+                #                         left + cellSize * 0.75, top + cellSize * 0.4, fill="black")
         elif board[row][col] == -1:
             self.canvas.create_oval(left, top, right, bottom, fill="yellow")
         elif board[row][col] == -3:
